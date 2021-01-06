@@ -1,3 +1,3 @@
-import { TemplatePlugin } from './template-plugin';
+import { E2ePlugin } from './e2e-plugin';
 
-export default TemplatePlugin;
+export default E2ePlugin;

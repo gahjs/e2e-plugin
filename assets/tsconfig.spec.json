@@ -1,0 +1,9 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "resolveJsonModule": true,
+    "module": "CommonJS",
+    "paths": {}
+  }
+}
