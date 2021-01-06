@@ -51,7 +51,7 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@gah/shared@^0.5.8":
+"@gah/shared@^0.5.2":
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/@gah/shared/-/shared-0.5.2.tgz#77d68c2a1ac1f104558bcfd6b874875d981d7387"
   integrity sha512-TpxzQ+O4CGtbOepea2rSTU9i0xaWVQ+RXN7WI3JdYcQGLzulL7YYPYDjLHgpzgHwHxl4ZcOoNdfhkyrTxE+HIQ==
