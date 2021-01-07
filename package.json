@@ -1,6 +1,6 @@
 {
   "name": "@gah/e2e-plugin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Template for a new plugin for gah",
   "main": "./lib/index.js",
   "scripts": {

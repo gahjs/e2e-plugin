@@ -17,7 +17,7 @@ export class E2ePlugin extends GahPlugin {
    * Called after adding the plugin with gah. Used to configure the plugin.
    * @param existingCfg This will be passed by gah and is used to check wheter a property is already configured or not
    */
-  public async onInstall(existingCfg: E2eConfig): Promise<GahPluginConfig> {
+  public async onInstall(existingCfg?: E2eConfig): Promise<GahPluginConfig> {
     // Create a new instance of the plugin configuration
     const newCfg = new E2eConfig();
     const isHost = this.configurationService.getGahModuleType() === GahModuleType.HOST;
@@ -28,26 +28,25 @@ export class E2ePlugin extends GahPlugin {
         msg: 'Please enter a (fuzzy) path to your test directory',
         default: 'test/specs',
         enabled: () => !(existingCfg?.testDirectoryPath),
-        itemType: 'file',
-      }) ?? existingCfg.testDirectoryPath; // Defaults back to the old value in case undefined gets returned
+        itemType: 'directory',
+      }) ?? existingCfg?.testDirectoryPath; // Defaults back to the old value in case undefined gets returned
 
       // Ask the user for configuration after installing the plugin. ONLY if the values do not exist yet!
       newCfg.sharedHelperPath = await this.promptService.fuzzyPath({
         msg: 'Please enter a (fuzzy) path to your test helper file (optional)',
         default: 'test/public-test.ts',
         enabled: () => !(existingCfg?.sharedHelperPath),
+
         itemType: 'file',
         optional: true
-      }) ?? existingCfg.sharedHelperPath; // Defaults back to the old value in case undefined gets returned
+      }) ?? existingCfg?.sharedHelperPath; // Defaults back to the old value in case undefined gets returned
 
       // Ask the user for configuration after installing the plugin. ONLY if the values do not exist yet!
-      newCfg.sharedHelperAliasName = await this.promptService.fuzzyPath({
+      newCfg.sharedHelperAliasName = await this.promptService.input({
         msg: 'Please enter the helper alias name for the tsconfig.json',
         default: '@projectname/test',
-        enabled: () => !(existingCfg?.sharedHelperAliasName) && Boolean(existingCfg?.sharedHelperPath),
-        itemType: 'any',
-        optional: true
-      }) ?? existingCfg.sharedHelperAliasName; // Defaults back to the old value in case undefined gets returned
+        enabled: () => !(existingCfg?.sharedHelperAliasName) && Boolean(newCfg?.sharedHelperPath)
+      }) ?? existingCfg?.sharedHelperAliasName; // Defaults back to the old value in case undefined gets returned
     }
     return newCfg;
   }
