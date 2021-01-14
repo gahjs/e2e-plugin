@@ -2,5 +2,6 @@ const baseConfig = require('./ava.config.cjs');
 
 module.exports = {
   ...baseConfig,
-  files: ['samplePath']
+  files: ['samplePath'],
+  snapshotDir: "custom-snapshotDir-directory"
 };

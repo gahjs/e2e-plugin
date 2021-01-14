@@ -50,10 +50,12 @@ export class E2ePlugin extends GahPlugin {
    * Called everytime gah gets used for all configured plugins. Register your handlers here.
    */
   public onInit() {
+
+    this.registerCommandHandler('test', (args) => this.executionService.execute(`yarn ava --config ${args[0]}.ava.config.cjs`, true, undefined, './.gah'));
     // Register a handler that gets called synchronously if the corresponding event occured. Some events can be called multiple times!
     if (this.readData('isInit') !== true) {
 
-      this.registerEventListener('GAH_FOLDER_CLEANED', (event) => {
+      this.registerEventListener('SYMLINKS_CREATED', (event) => {
         if (event.module === undefined) {
           return;
         }
@@ -252,8 +254,7 @@ export class E2ePlugin extends GahPlugin {
       const plugConf = this.getPluginCfgFromModule(depMod);
       if (plugConf?.testDirectoryPath) {
         const pathToCreatedFile = this.createModuleAvaConfig(module, depMod.moduleName as string);
-        this.editModuleAvaConfig(pathToCreatedFile, depMod.moduleName as string, plugConf);
-        this.registerCommandHandler(`test ${depMod.moduleName}`, () => this.executionService.execute(`yarn ava --config ${depMod.moduleName}.ava.config.cjs`, true));
+        this.editModuleAvaConfig(pathToCreatedFile, depMod.moduleName as string);
       }
     }
   }
@@ -270,12 +271,14 @@ export class E2ePlugin extends GahPlugin {
     return newTemplatePath;
   }
 
-  private editModuleAvaConfig(path: string, moduleName: string, config: E2eConfig) {
-    const avaConfig = this.fileSystemService.readFile(path);
+  private editModuleAvaConfig(path: string, moduleName: string) {
+    let avaConfig = this.fileSystemService.readFile(path);
 
-    const newAvaConfig = avaConfig.replace('[\'samplePath\']', `[test/${moduleName}/${config.testDirectoryPath}/**/*]`);
+    avaConfig = avaConfig
+      .replace('[\'samplePath\']', `['test/${moduleName}/**/*']`)
+      .replace('custom-snapshotDir-directory', `test/${moduleName}/snapshots`);
 
-    this.fileSystemService.saveFile(path, newAvaConfig);
+    this.fileSystemService.saveFile(path, avaConfig);
   }
 
   private editPkgJson(module: GahModuleData) {
