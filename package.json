@@ -13,7 +13,7 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "@gah/shared": "^0.5.2"
+    "@gah/shared": "^0.5.7"
   },
   "devDependencies": {
     "@awdware/eslint-config-nodejs": "^0.0.6",

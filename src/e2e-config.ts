@@ -1,8 +1,9 @@
 import { GahPluginConfig } from '@gah/shared';
 
 export class E2eConfig extends GahPluginConfig {
-  public e2ePackages: {[key: string]: string};
+  public isConfiguard: boolean;
   public testDirectoryPath: string;
   public sharedHelperPath: string;
   public sharedHelperAliasName: string;
+  public e2ePackages: {[key: string]: string};
 }
