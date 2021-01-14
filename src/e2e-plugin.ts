@@ -2,7 +2,6 @@ import { GahModuleData, GahModuleType, GahPlugin, GahPluginConfig, TsConfig } fr
 import { e2ePackages } from './e2e-packages';
 
 import { E2eConfig } from './e2e-config';
-import { AvaModuleConfig } from './models/ava-module-config';
 
 /**
  * A gah plugin has to extend the abstract GahPlugin base class and implement the abstract methods.
@@ -53,7 +52,6 @@ export class E2ePlugin extends GahPlugin {
   public onInit() {
     // Register a handler that gets called synchronously if the corresponding event occured. Some events can be called multiple times!
     if (this.readData('isInit') !== true) {
-
 
       this.registerEventListener('GAH_FOLDER_CLEANED', (event) => {
         if (event.module === undefined) {
@@ -110,6 +108,7 @@ export class E2ePlugin extends GahPlugin {
         this.editPkgJson(event.module);
         this.loggerService.log('Package.json adjusted for tests');
       });
+
       this.storeData('isInit', true);
     }
   }
@@ -175,8 +174,8 @@ export class E2ePlugin extends GahPlugin {
 
       if (plugConf?.sharedHelperPath) {
         let sharedHelperDistPath;
-        if (depMod.isHost) {
-          sharedHelperDistPath = this.fileSystemService.join(module.basePath, '/test', depMod.packageName!, depMod.moduleName!, plugConf.sharedHelperPath);
+        if (module.isHost) {
+          sharedHelperDistPath = this.fileSystemService.join('test', depMod.packageName!, depMod.moduleName!, plugConf.sharedHelperPath);
         } else {
           sharedHelperDistPath = this.fileSystemService.join(module.srcBasePath, '.gah/test', depMod.packageName!, depMod.moduleName!, plugConf.sharedHelperPath);
         }
@@ -199,11 +198,11 @@ export class E2ePlugin extends GahPlugin {
           sharedHelperDistPath = this.fileSystemService.join(module.srcBasePath, '.gah/test', depMod.packageName!, depMod.moduleName!, plugDirectoryPath[0]);
         }
 
-        const sharedHelperSourcePath = this.fileSystemService.join(depMod.basePath, plugDirectoryPath[0]);
+        const sharedHelperSourcePath = this.fileSystemService.join(depMod.basePath, plugDirectoryPath[0], plugDirectoryPath[1]);
         if (this.fileSystemService.directoryExists(sharedHelperSourcePath)) {
           this.fileSystemService.ensureDirectory(sharedHelperDistPath);
           try {
-            await this.fileSystemService.createDirLink(`${sharedHelperDistPath}/${plugDirectoryPath[1]}` , sharedHelperSourcePath);
+            await this.fileSystemService.createDirLink(`${sharedHelperDistPath}/${plugDirectoryPath[1]}`, sharedHelperSourcePath);
           } catch (error) {
             this.loggerService.error(error);
           }
@@ -254,6 +253,7 @@ export class E2ePlugin extends GahPlugin {
       if (plugConf?.testDirectoryPath) {
         const pathToCreatedFile = this.createModuleAvaConfig(module, depMod.moduleName as string);
         this.editModuleAvaConfig(pathToCreatedFile, depMod.moduleName as string, plugConf);
+        this.registerCommandHandler(`test ${depMod.moduleName}`, () => this.executionService.execute(`yarn ava --config ${depMod.moduleName}.ava.config.cjs`, true));
       }
     }
   }
