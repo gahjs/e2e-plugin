@@ -69,7 +69,7 @@ export class E2ePlugin extends GahPlugin {
         this.loggerService.log('test folder cleaned');
       });
 
-      this.registerEventListener('TS_CONFIG_ADJUSTED', (event) => {
+      this.registerEventListener('TS_CONFIG_ADJUSTED', async (event) => {
         if (event.module === undefined) {
           return;
         }
@@ -81,12 +81,12 @@ export class E2ePlugin extends GahPlugin {
         }
 
         this.addPathsToTsconfig(event.module, allDepModules);
-        this.linkSharedTestFolder(event.module, allDepModules);
+        await this.linkSharedTestFolder(event.module, allDepModules);
 
         this.loggerService.log('tsconfig.spec.json generated');
       });
 
-      this.registerEventListener('SYMLINKS_CREATED', (event) => {
+      this.registerEventListener('SYMLINKS_CREATED', async (event) => {
         if (event.module === undefined) {
           return;
         }
@@ -96,7 +96,7 @@ export class E2ePlugin extends GahPlugin {
         }
         const allDepModules = this.allFilterdRecursiveDependencies(event.module.dependencies);
 
-        this.linkTestFiles(event.module, allDepModules);
+        await this.linkTestFiles(event.module, allDepModules);
         this.generateMainAvaConfig(event.module);
         this.generateModuleAvaConfig(event.module, allDepModules);
         this.loggerService.log(`entry module: ${event.module?.moduleName!}`);
@@ -193,17 +193,17 @@ export class E2ePlugin extends GahPlugin {
         let sharedHelperDistPath;
         const plugDirectoryPath = this.extractDirectoryFromPluginPath(plugConf.sharedHelperPath);
 
-        if (depMod.isHost) {
-          sharedHelperDistPath = this.fileSystemService.join(module.basePath, '/test', depMod.packageName!, depMod.moduleName!, plugDirectoryPath);
+        if (module.isHost) {
+          sharedHelperDistPath = this.fileSystemService.join(module.basePath, '/test', depMod.packageName!, depMod.moduleName!, plugDirectoryPath[0]);
         } else {
-          sharedHelperDistPath = this.fileSystemService.join(module.srcBasePath, '.gah/test', depMod.packageName!, depMod.moduleName!, plugDirectoryPath);
+          sharedHelperDistPath = this.fileSystemService.join(module.srcBasePath, '.gah/test', depMod.packageName!, depMod.moduleName!, plugDirectoryPath[0]);
         }
 
-        const sharedHelperSourcePath = this.fileSystemService.join(depMod.basePath, plugDirectoryPath);
+        const sharedHelperSourcePath = this.fileSystemService.join(depMod.basePath, plugDirectoryPath[0]);
         if (this.fileSystemService.directoryExists(sharedHelperSourcePath)) {
           this.fileSystemService.ensureDirectory(sharedHelperDistPath);
           try {
-            await this.fileSystemService.createDirLink(sharedHelperDistPath, sharedHelperSourcePath);
+            await this.fileSystemService.createDirLink(`${sharedHelperDistPath}/${plugDirectoryPath[1]}` , sharedHelperSourcePath);
           } catch (error) {
             this.loggerService.error(error);
           }
@@ -212,10 +212,11 @@ export class E2ePlugin extends GahPlugin {
     }
   }
 
-  private extractDirectoryFromPluginPath(plugPath: string) {
+  private extractDirectoryFromPluginPath(plugPath: string): string[] {
     const pathArray = plugPath.split('/');
-    pathArray.pop();
-    return pathArray.join('/');
+    pathArray.pop(); // remove index file
+    const lastFolder = pathArray.pop();
+    return [pathArray.join('/'), lastFolder!];
   }
 
   private async linkTestFiles(module: GahModuleData, allDepModules: GahModuleData[]) {
@@ -226,10 +227,10 @@ export class E2ePlugin extends GahPlugin {
 
         if (this.fileSystemService.directoryExists(sourceTestDirectoryPath)) {
 
-          const distTestFolder = this.fileSystemService.join(module.basePath, 'test', depMod.moduleName!);
+          const distTestFolder = this.fileSystemService.join(module.basePath, 'test');
           this.fileSystemService.ensureDirectory(distTestFolder);
           try {
-            await this.fileSystemService.createDirLink(distTestFolder, sourceTestDirectoryPath);
+            await this.fileSystemService.createDirLink(`${distTestFolder}/${depMod.moduleName!}`, sourceTestDirectoryPath);
           } catch (error) {
             this.loggerService.error(error);
           }
@@ -270,11 +271,11 @@ export class E2ePlugin extends GahPlugin {
   }
 
   private editModuleAvaConfig(path: string, moduleName: string, config: E2eConfig) {
-    const avaConfig = this.fileSystemService.parseFile<AvaModuleConfig>(path);
+    const avaConfig = this.fileSystemService.readFile(path);
 
-    avaConfig.files = [`test/${moduleName}/${config.testDirectoryPath}/**/*`];
+    const newAvaConfig = avaConfig.replace('[\'samplePath\']', `[test/${moduleName}/${config.testDirectoryPath}/**/*]`);
 
-    this.fileSystemService.saveObjectToFile(path, avaConfig);
+    this.fileSystemService.saveFile(path, newAvaConfig);
   }
 
   private editPkgJson(module: GahModuleData) {
