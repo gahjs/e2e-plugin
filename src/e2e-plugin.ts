@@ -1,4 +1,4 @@
-import { GahModuleData, GahModuleType, GahPlugin, GahPluginConfig, TsConfig } from '@gah/shared';
+import { GahModuleData, GahModuleType, GahPlugin, GahPluginConfig, PackageJson, TsConfig } from '@gah/shared';
 import { e2ePackages } from './e2e-packages';
 
 import { E2eConfig } from './e2e-config';
@@ -19,7 +19,7 @@ export class E2ePlugin extends GahPlugin {
   public async onInstall(existingCfg?: E2eConfig): Promise<GahPluginConfig> {
     // Create a new instance of the plugin configuration
     const newCfg = new E2eConfig();
-    const isHost = this.configurationService.getGahModuleType() === GahModuleType.HOST;
+    const isHost = await this.configurationService.getGahModuleType() === GahModuleType.HOST;
 
     if (!isHost) {
       // Ask the user for configuration after installing the plugin. ONLY if the values do not exist yet!
@@ -55,59 +55,54 @@ export class E2ePlugin extends GahPlugin {
     // Register a handler that gets called synchronously if the corresponding event occured. Some events can be called multiple times!
     if (this.readData('isInit') !== true) {
 
-      this.registerEventListener('SYMLINKS_CREATED', (event) => {
+      this.registerEventListener('AFTER_GENERATE_SYMLINKS', async (event) => {
         if (event.module === undefined) {
           return;
         }
 
         if (event.module?.isHost) {
-          this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.basePath, 'test'));
+          await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.basePath, 'test'));
         } else {
-          this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.srcBasePath, '.gah/test'));
+          await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.srcBasePath, '.gah/test'));
         }
 
         this.loggerService.log('test folder cleaned');
-      });
 
-      this.registerEventListener('TS_CONFIG_ADJUSTED', async (event) => {
-        if (event.module === undefined) {
-          return;
-        }
-
-        const allDepModules = this.allFilterdRecursiveDependencies(event.module.dependencies);
-
-        if (event.module?.isHost) {
-          this.createTsconfigForTest(event.module);
-        }
-
-        this.addPathsToTsconfig(event.module, allDepModules);
-        await this.linkSharedTestFolder(event.module, allDepModules);
-
-        this.loggerService.log('tsconfig.spec.json generated');
-      });
-
-      this.registerEventListener('SYMLINKS_CREATED', async (event) => {
-        if (event.module === undefined) {
-          return;
-        }
-
+        // After here only necessary for host
         if (!event.module?.isHost) {
           return;
         }
         const allDepModules = this.allFilterdRecursiveDependencies(event.module.dependencies);
 
         await this.linkTestFiles(event.module, allDepModules);
-        this.generateMainAvaConfig(event.module);
-        this.generateModuleAvaConfig(event.module, allDepModules);
+        await this.generateMainAvaConfig(event.module);
+        await this.generateModuleAvaConfig(event.module, allDepModules);
         this.loggerService.log(`entry module: ${event.module?.moduleName!}`);
       });
 
-      this.registerEventListener('BEFORE_INSTALL_PACKAGES', (event) => {
+      this.registerEventListener('BEFORE_ADJUST_TS_CONFIG', async (event) => {
         if (event.module === undefined) {
           return;
         }
 
-        this.editPkgJson(event.module);
+        const allDepModules = this.allFilterdRecursiveDependencies(event.module.dependencies);
+
+        if (event.module?.isHost) {
+          await this.createTsconfigForTest(event.module);
+        }
+
+        await this.addPathsToTsconfig(event.module, allDepModules, event.tsConfig);
+        await this.linkSharedTestFolder(event.module, allDepModules);
+
+        this.loggerService.log('tsconfig.spec.json generated');
+      });
+
+      this.registerEventListener('BEFORE_MERGE_DEPENDENCIES', (event) => {
+        if (event.module === undefined) {
+          return;
+        }
+
+        this.editPkgJson(event.pkgJson);
         this.loggerService.log('Package.json adjusted for tests');
       });
 
@@ -151,25 +146,25 @@ export class E2ePlugin extends GahPlugin {
     });
   }
 
-  private createTsconfigForTest(module: GahModuleData) {
+  private async createTsconfigForTest(module: GahModuleData) {
     const tsconfigJsonTemplatePath = this.fileSystemService.join(__dirname, '..', 'assets', 'tsconfig.spec.json');
     const tsconfigJsonSourcePath = this.fileSystemService.join(module.basePath, 'tsconfig.spec.json');
-    if (this.fileSystemService.fileExists(tsconfigJsonSourcePath)) {
-      this.fileSystemService.deleteFile(tsconfigJsonSourcePath);
+    if (await this.fileSystemService.fileExists(tsconfigJsonSourcePath)) {
+      await this.fileSystemService.deleteFile(tsconfigJsonSourcePath);
     }
-    this.fileSystemService.copyFile(tsconfigJsonTemplatePath, module.basePath);
+    await this.fileSystemService.copyFile(tsconfigJsonTemplatePath, module.basePath);
   }
 
-  private async addPathsToTsconfig(module: GahModuleData, allDepModules: GahModuleData[]) {
-    let tsconfigPath: string;
-
+  private async addPathsToTsconfig(module: GahModuleData, allDepModules: GahModuleData[], moduleTsConfig?: TsConfig) {
+    let tsConfigPath: string;
+    let tsConfig: TsConfig;
     if (module.isHost) {
-      tsconfigPath = this.fileSystemService.join(module.basePath, 'tsconfig.spec.json');
+      tsConfigPath = this.fileSystemService.join(module.basePath, 'tsconfig.spec.json');
+      tsConfig = await this.fileSystemService.parseFile<TsConfig>(tsConfigPath);
     } else {
-      tsconfigPath = this.fileSystemService.join(module.basePath, 'tsconfig.json');
+      tsConfig = moduleTsConfig!;
     }
 
-    const tsConfig = this.fileSystemService.parseFile<TsConfig>(tsconfigPath);
 
     allDepModules.forEach(depMod => {
       const plugConf = this.getPluginCfgFromModule(depMod);
@@ -184,7 +179,9 @@ export class E2ePlugin extends GahPlugin {
         tsConfig.compilerOptions.paths[`@${depMod.packageName}/${depMod.moduleName}/test`] = [sharedHelperDistPath, '[gah] This property was generated by gah/e2e-plugin'];
       }
     });
-    this.fileSystemService.saveObjectToFile(tsconfigPath, tsConfig);
+    if (module.isHost) {
+      await this.fileSystemService.saveObjectToFile(tsConfigPath!, tsConfig);
+    }
   }
 
   private async linkSharedTestFolder(module: GahModuleData, allDepModules: GahModuleData[]) {
@@ -201,8 +198,8 @@ export class E2ePlugin extends GahPlugin {
         }
 
         const sharedHelperSourcePath = this.fileSystemService.join(depMod.basePath, plugDirectoryPath[0], plugDirectoryPath[1]);
-        if (this.fileSystemService.directoryExists(sharedHelperSourcePath)) {
-          this.fileSystemService.ensureDirectory(sharedHelperDistPath);
+        if (await this.fileSystemService.directoryExists(sharedHelperSourcePath)) {
+          await this.fileSystemService.ensureDirectory(sharedHelperDistPath);
           try {
             await this.fileSystemService.createDirLink(`${sharedHelperDistPath}/${plugDirectoryPath[1]}`, sharedHelperSourcePath);
           } catch (error) {
@@ -226,10 +223,10 @@ export class E2ePlugin extends GahPlugin {
       if (plugConf?.testDirectoryPath) {
         const sourceTestDirectoryPath = this.fileSystemService.join(depMod.basePath, plugConf.testDirectoryPath);
 
-        if (this.fileSystemService.directoryExists(sourceTestDirectoryPath)) {
+        if (await this.fileSystemService.directoryExists(sourceTestDirectoryPath)) {
 
           const distTestFolder = this.fileSystemService.join(module.basePath, 'test');
-          this.fileSystemService.ensureDirectory(distTestFolder);
+          await this.fileSystemService.ensureDirectory(distTestFolder);
           try {
             await this.fileSystemService.createDirLink(`${distTestFolder}/${depMod.moduleName!}`, sourceTestDirectoryPath);
           } catch (error) {
@@ -240,51 +237,48 @@ export class E2ePlugin extends GahPlugin {
     }
   }
 
-  private generateMainAvaConfig(module: GahModuleData) {
+  private async generateMainAvaConfig(module: GahModuleData) {
     const avaMainConfigTemplatePath = this.fileSystemService.join(__dirname, '..', 'assets', 'ava.config.cjs');
     const avaMainConfigSourcePath = this.fileSystemService.join(module.basePath, 'ava.config.cjs');
-    if (this.fileSystemService.fileExists(avaMainConfigSourcePath)) {
-      this.fileSystemService.deleteFile(avaMainConfigSourcePath);
+    if (await this.fileSystemService.fileExists(avaMainConfigSourcePath)) {
+      await this.fileSystemService.deleteFile(avaMainConfigSourcePath);
     }
-    this.fileSystemService.copyFile(avaMainConfigTemplatePath, module.basePath);
+    await this.fileSystemService.copyFile(avaMainConfigTemplatePath, module.basePath);
   }
 
-  private generateModuleAvaConfig(module: GahModuleData, allDepModules: GahModuleData[]) {
+  private async generateModuleAvaConfig(module: GahModuleData, allDepModules: GahModuleData[]) {
     for (const depMod of allDepModules) {
       const plugConf = this.getPluginCfgFromModule(depMod);
       if (plugConf?.testDirectoryPath) {
-        const pathToCreatedFile = this.createModuleAvaConfig(module, depMod.moduleName as string);
-        this.editModuleAvaConfig(pathToCreatedFile, depMod.moduleName as string);
+        const pathToCreatedFile = await this.createModuleAvaConfig(module, depMod.moduleName as string);
+        await this.editModuleAvaConfig(pathToCreatedFile, depMod.moduleName as string);
       }
     }
   }
 
-  private createModuleAvaConfig(module: GahModuleData, moduleName: string) {
+  private async createModuleAvaConfig(module: GahModuleData, moduleName: string) {
     const avaModukeConfigTemplatePath = this.fileSystemService.join(__dirname, '..', 'assets', 'template.ava.config.cjs');
-    this.fileSystemService.copyFile(avaModukeConfigTemplatePath, module.basePath);
+    await this.fileSystemService.copyFile(avaModukeConfigTemplatePath, module.basePath);
     const oldTemplatePath = this.fileSystemService.join(module.basePath, 'template.ava.config.cjs');
     const newTemplatePath = this.fileSystemService.join(module.basePath, `${moduleName}.ava.config.cjs`);
-    if (this.fileSystemService.fileExists(newTemplatePath)) {
-      this.fileSystemService.deleteFile(newTemplatePath);
+    if (await this.fileSystemService.fileExists(newTemplatePath)) {
+      await this.fileSystemService.deleteFile(newTemplatePath);
     }
-    this.fileSystemService.rename(oldTemplatePath, newTemplatePath);
+    await this.fileSystemService.rename(oldTemplatePath, newTemplatePath);
     return newTemplatePath;
   }
 
-  private editModuleAvaConfig(path: string, moduleName: string) {
-    let avaConfig = this.fileSystemService.readFile(path);
+  private async editModuleAvaConfig(path: string, moduleName: string) {
+    let avaConfig = await this.fileSystemService.readFile(path);
 
     avaConfig = avaConfig
       .replace('[\'samplePath\']', `['test/${moduleName}/**/*']`)
       .replace('custom-snapshotDir-directory', `test/${moduleName}/snapshots`);
 
-    this.fileSystemService.saveFile(path, avaConfig);
+    await this.fileSystemService.saveFile(path, avaConfig);
   }
 
-  private editPkgJson(module: GahModuleData) {
-    const pkgJsonPath = this.fileSystemService.join(module?.basePath, 'package.json');
-    const pkgJson = module?.packageJson;
-
+  private editPkgJson(pkgJson: PackageJson) {
     const allPackagesWithVersions = Object.keys(e2ePackages).map(pkgName => { return { name: pkgName, version: e2ePackages[pkgName] }; });
     if (this.cfg && this.cfg.e2ePackages) {
       allPackagesWithVersions.push(...Object.keys(this.cfg.e2ePackages).map(pkgName => { return { name: pkgName, version: this.cfg.e2ePackages[pkgName] }; }));
@@ -293,7 +287,5 @@ export class E2ePlugin extends GahPlugin {
     allPackagesWithVersions.forEach(x => {
       pkgJson.devDependencies![x.name] = x.version;
     });
-
-    this.fileSystemService.saveObjectToFile(pkgJsonPath, pkgJson);
   }
 }
