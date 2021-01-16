@@ -1,6 +1,6 @@
 {
   "name": "@gah/e2e-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A plugin for gah to work with playwright and ava.",
   "main": "./lib/index.js",
   "scripts": {
@@ -10,20 +10,23 @@
     "drop": "yarn run build && yarn publish --access public "
   },
   "author": "Timkoeln",
-  "contributors": ["Timkoeln", "LoaderB0T"],
+  "contributors": [
+    "Timkoeln",
+    "LoaderB0T"
+  ],
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "@gah/shared": "^0.5.7"
+    "@gah/shared": "^0.6.0"
   },
   "devDependencies": {
     "@awdware/eslint-config-nodejs": "^0.0.6",
-    "@types/node": "^14.11.8",
-    "@typescript-eslint/eslint-plugin": "^4.4.1",
-    "@typescript-eslint/parser": "^4.4.1",
+    "@types/node": "^12.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.13.0",
+    "@typescript-eslint/parser": "^4.13.0",
     "del-cli": "^3.0.1",
-    "eslint": "^7.11.0",
-    "ts-node": "^9.0.0",
-    "typescript": "^4.0.3"
+    "eslint": "^7.18.0",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
   }
 }
