@@ -40,7 +40,7 @@ export class E2ePlugin extends GahPlugin {
       }) ?? existingCfg?.sharedHelperPath; // Defaults back to the old value in case undefined gets returned
 
       if (newCfg.testDirectoryPath || newCfg.sharedHelperPath) {
-        newCfg.isConfiguard = true;
+        newCfg.isConfigured = true;
       }
     }
     return newCfg;
@@ -129,7 +129,7 @@ export class E2ePlugin extends GahPlugin {
   private getPluginCfgFromModule(module: GahModuleData): E2eConfig | undefined {
     let pluginCfg; E2eConfig;
     module.pluginCfg?.['@gah/e2e-plugin']?.forEach(cfg => {
-      if (cfg.isConfiguard) {
+      if (cfg.isConfigured) {
         pluginCfg = cfg;
       }
     });
