@@ -1,6 +1,6 @@
 {
   "name": "@gah/e2e-plugin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A plugin for gah to work with playwright and ava.",
   "main": "./lib/index.js",
   "scripts": {
