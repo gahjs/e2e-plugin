@@ -20,7 +20,7 @@ gah plugin add @gah/e2e-plugin
  
 ### 2. Module test
 
- 1. Navigate to gah module folder in which tests should be created.
+ 1. Navigate to gah module folder in which tests should be created.<br>
 You can Skip 2. if you have no shared-test files.<br>
  2. Make sure that the shared module where the shared test files are located is registered as a dependency in the module. If not add it as dependency.
  3. Open cmd in folder and run:
@@ -32,18 +32,18 @@ gah plugin add @gah/e2e-plugin
 
 ## Installation
 To exect
-1. Navigate to host folder and open a cmd.
+ 1. Navigate to host folder and open a cmd.
 
 ```console
 gah install 
 ```
-2. Navigate to the module base folder where the test files located and open a cmd.
+ 2. Navigate to the module base folder where the test files located and open a cmd.
 
 ```console
 gah install 
 ```
 You can skip 3. if you have no shared-test files.<br>
-3. Navigate to shared module folder where the shared-test helper located and open a cmd.
+ 3. Navigate to shared module folder where the shared-test helper located and open a cmd.
 
 ```console
 gah install 
