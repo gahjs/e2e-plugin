@@ -98,12 +98,12 @@ export class E2ePlugin extends GahPlugin {
         this.loggerService.log('tsconfig.spec.json generated');
       });
 
-      this.registerEventListener('BEFORE_MERGE_DEPENDENCIES', (event) => {
+      this.registerEventListener('BEFORE_INSTALL_PACKAGES', (event) => {
         if (event.module === undefined) {
           return;
         }
 
-        this.editPkgJson(event.pkgJson);
+        this.editPkgJson(event.module.packageJson);
         this.loggerService.log('Package.json adjusted for tests');
       });
 
