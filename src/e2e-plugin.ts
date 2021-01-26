@@ -60,15 +60,6 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
 
-        if (event.module?.isHost) {
-          await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.basePath, 'test'));
-        } else {
-          await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.srcBasePath, '.gah/test'));
-        }
-
-        this.loggerService.log('test folder cleaned');
-
-        // After here only necessary for host
         if (!event.module?.isHost) {
           return;
         }
@@ -84,6 +75,14 @@ export class E2ePlugin extends GahPlugin {
         if (event.module === undefined) {
           return;
         }
+        
+        if (event.module?.isHost) {
+          await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.basePath, 'test'));
+        } else {
+          await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.srcBasePath, '.gah/test'));
+        }
+
+        this.loggerService.log('test folder cleaned');
 
         const allDepModules = this.allFilterdRecursiveDependencies(event.module.dependencies);
 
