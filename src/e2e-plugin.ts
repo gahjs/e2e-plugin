@@ -60,6 +60,10 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
 
+        if (this.isPluginInitInModule(event.module)) {
+          return;
+        }
+
         if (!event.module?.isHost) {
           return;
         }
@@ -76,8 +80,12 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
         
+        if (this.isPluginInitInModule(event.module)) {
+          return;
+        }
+        
         if (event.module?.isHost) {
-          await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.basePath, 'test'));
+          // await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.basePath, ));
         } else {
           await this.fileSystemService.deleteFilesInDirectory(this.fileSystemService.join(event.module.srcBasePath, '.gah/test'));
         }
@@ -100,6 +108,10 @@ export class E2ePlugin extends GahPlugin {
 
       this.registerEventListener('BEFORE_INSTALL_PACKAGES', (event) => {
         if (event.module === undefined) {
+          return;
+        }
+
+        if (this.isPluginInitInModule(event.module)) {
           return;
         }
 
@@ -135,6 +147,15 @@ export class E2ePlugin extends GahPlugin {
       }
     });
     return pluginCfg;
+  }
+
+  private isPluginInitInModule(module: GahModuleData): boolean {
+    const res = this.getPluginCfgFromModule(module);
+
+    if(res && res?.isConfigured){
+      return true;
+    }
+    return false;
   }
 
   private collectAllReferencedModules(module: GahModuleData, allModules: GahModuleData[]) {
