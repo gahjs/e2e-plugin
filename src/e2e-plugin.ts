@@ -60,7 +60,7 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
 
-        if (this.isPluginInitInModule(event.module)) {
+        if (!this.isPluginInitInModule(event.module)) {
           return;
         }
 
@@ -80,7 +80,7 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
         
-        if (this.isPluginInitInModule(event.module)) {
+        if (!this.isPluginInitInModule(event.module)) {
           return;
         }
         
@@ -111,7 +111,7 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
 
-        if (this.isPluginInitInModule(event.module)) {
+        if (!this.isPluginInitInModule(event.module)) {
           return;
         }
 
