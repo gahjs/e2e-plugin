@@ -61,9 +61,36 @@ export class E2ePlugin extends GahPlugin {
    * Called everytime gah gets used for all configured plugins. Register your handlers here.
    */
   public onInit() {
-    this.registerCommandHandler("test", (args) =>
+    this.registerCommandHandler("test", () =>
       this.executionService.execute(
-        `yarn ava --config ${args[0]}.ava.config.cjs`,
+        `yarn playwright test`,
+        true,
+        undefined,
+        "./.gah"
+      )
+    );
+    
+    this.registerCommandHandler("test-p", (args) =>
+      this.executionService.execute(
+        `yarn playwright test --project=${args[0]}`,
+        true,
+        undefined,
+        "./.gah"
+      )
+    );
+
+    this.registerCommandHandler("test-ci", () =>
+      this.executionService.execute(
+        `yarn ava --config=playwright-ci.config.ts`,
+        true,
+        undefined,
+        "./.gah"
+      )
+    );
+
+    this.registerCommandHandler("test-ci-p", (args) =>
+      this.executionService.execute(
+        `yarn ava --config=playwright-ci.config.ts --project=${args[0]}`,
         true,
         undefined,
         "./.gah"
@@ -362,7 +389,7 @@ export class E2ePlugin extends GahPlugin {
 
     const newProject = {
       name: moduleName,
-      testDir: `test/${moduleName}/**/*'`,
+      testDir: `test/${moduleName}/'`,
       use: {},
     };
 

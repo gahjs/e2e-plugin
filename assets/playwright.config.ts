@@ -14,8 +14,9 @@ const config: PlaywrightTestConfig = {
     screenshot: "only-on-failure",
     video: "retry-with-video",
   },
-  testDir: "",
-  projects: [],
+  testDir: "test",
+  testMatch: ".*(spec)\.(ts)",
+  projects: playwrightProjectsConfig,
 };
 
 export default config;
