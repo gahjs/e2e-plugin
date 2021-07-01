@@ -1,7 +1,7 @@
 {
   "name": "@gah/e2e-plugin",
   "version": "0.2.7",
-  "description": "A plugin for gah to work with playwright and ava.",
+  "description": "A plugin for gah to work with playwright.",
   "main": "./lib/index.js",
   "scripts": {
     "prebuild": "del-cli lib",

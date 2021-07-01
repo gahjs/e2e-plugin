@@ -1,7 +1,4 @@
-export const e2ePackages = 
-  {
-    'ava': '^3.15.0',
-    'playwright': '^1.8.0',
-    'tsconfig-paths': '^3.9.0'
-  } as {[key: string]: string}
-;
+export const e2ePackages = {
+  "@playwright/test": "^1.12.3",
+  "playwright": "^1.12.3"
+} as { [key: string]: string };
