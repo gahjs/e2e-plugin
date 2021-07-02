@@ -114,7 +114,7 @@ export class E2ePlugin extends GahPlugin {
 
     // Register a handler that gets called synchronously if the corresponding event occured. Some events can be called multiple times!
     if (this.readData("isInit") !== true) {
-      this.registerEventListener("BEFORE_ADJUST_TS_CONFIG", async (event) => {
+      this.registerEventListener("AFTER_GENERATE_SYMLINKS", async (event) => {
         if (event.module === undefined) {
           return;
         }
@@ -360,7 +360,7 @@ export class E2ePlugin extends GahPlugin {
 
   /**
    * link shared test helper folder
-   * sharedHelperPath only exist in shared helper modules
+   * sharedHelperPath only exists in shared helper modules
    */
   private async linkSharedTestFolder(
     allDepModules: GahModuleData[],
