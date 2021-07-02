@@ -3,6 +3,7 @@ import {
   GahModuleType,
   GahPlugin,
   GahPluginConfig,
+  GahPluginDependencyConfig,
   PackageJson,
   TsConfig,
 } from "@gah/shared";
@@ -61,6 +62,9 @@ export class E2ePlugin extends GahPlugin {
    * Called everytime gah gets used for all configured plugins. Register your handlers here.
    */
   public onInit() {
+    /**
+     * executes all tests of the modules defined in playwright.projects.config.json
+     */
     this.registerCommandHandler("test", () =>
       this.executionService.execute(
         `yarn playwright test`,
@@ -69,7 +73,10 @@ export class E2ePlugin extends GahPlugin {
         "./.gah"
       )
     );
-    
+
+    /**
+     * executes the tests of the specified module
+     */
     this.registerCommandHandler("test-p", (args) =>
       this.executionService.execute(
         `yarn playwright test --project=${args[0]}`,
@@ -79,6 +86,10 @@ export class E2ePlugin extends GahPlugin {
       )
     );
 
+    /**
+     * Use CI config
+     * executes all tests of the modules defined in playwright.projects.config.json
+     */
     this.registerCommandHandler("test-ci", () =>
       this.executionService.execute(
         `yarn ava --config=playwright-ci.config.ts`,
@@ -88,6 +99,10 @@ export class E2ePlugin extends GahPlugin {
       )
     );
 
+    /**
+     * Use CI config
+     * executes the tests of the specified module
+     */
     this.registerCommandHandler("test-ci-p", (args) =>
       this.executionService.execute(
         `yarn ava --config=playwright-ci.config.ts --project=${args[0]}`,
@@ -104,23 +119,32 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
 
-        // if gah module
+        /**
+         * if gah module
+         */
         if (!event.module?.isHost) {
           if (!this.isPluginConfiguardInModule(event.module)) {
             return;
           }
 
-          // declare dist folder for tests
+          /**
+           * declare dist folder for tests
+           */
           const distTestFolder = this.fileSystemService.join(
             event.module.srcBasePath,
             ".gah/test"
           );
 
-          // if dist test folder exist then delete folder
+          /**
+           * if dist test folder exist then delete
+           */
           if (await this.fileSystemService.directoryExists(distTestFolder)) {
             await this.fileSystemService.deleteFilesInDirectory(distTestFolder);
           }
 
+          /**
+           * get all dep modules with e2e plugin cfg
+           */
           const allDepModules = this.allFilterdRecursiveDependencies(
             event.module.dependencies
           );
@@ -131,23 +155,32 @@ export class E2ePlugin extends GahPlugin {
           await this.addPathsToTsconfig(event.module, allDepModules);
         }
 
-        // if gah host
+        /**
+         * if gah host
+         */
         if (event.module?.isHost) {
           if (!this.isPluginConfiguardInAnyModule(event.module)) {
             return;
           }
 
-          // declare dist folder for tests
+          /**
+           * declare dist folder for tests
+           */
           const distTestFolder = this.fileSystemService.join(
             event.module.basePath,
             "test"
           );
 
-          // if dist test folder exist then delete folder
+          /**
+           * if dist test folder exist then delete
+           */
           if (await this.fileSystemService.directoryExists(distTestFolder)) {
             await this.fileSystemService.deleteFilesInDirectory(distTestFolder);
           }
 
+          /**
+           * get all dep modules with e2e plugin cfg
+           */
           const allDepModules = this.allFilterdRecursiveDependencies(
             event.module.dependencies
           );
@@ -176,6 +209,9 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
 
+        /**
+         * if gah module without plugin cfg
+         */
         if (
           !event.module?.isHost &&
           !this.isPluginConfiguardInModule(event.module)
@@ -183,6 +219,9 @@ export class E2ePlugin extends GahPlugin {
           return;
         }
 
+        /**
+         * if gah host without any module with plugin cfg
+         */
         if (
           event.module?.isHost &&
           !this.isPluginConfiguardInAnyModule(event.module)
@@ -205,15 +244,18 @@ export class E2ePlugin extends GahPlugin {
     return this.config as E2eConfig;
   }
 
-  // check is plugin is configuard in module
+  /**
+   * check is plugin is configuard in module
+   */
   private isPluginConfiguardInModule(module: GahModuleData): boolean {
     if (this.getPluginCfgFromModule(module)) {
       return true;
     }
     return false;
   }
-
-  // find all dependencie modules with @gah/e2e-plugin config
+  /**
+   * find all dependencie modules with @gah/e2e-plugin config
+   */
   private allFilterdRecursiveDependencies(
     dependencies: GahModuleData[]
   ): GahModuleData[] {
@@ -227,7 +269,9 @@ export class E2ePlugin extends GahPlugin {
     return filterdModules;
   }
 
-  // find all dependencie modules
+  /**
+   * find all dependencie modules
+   */
   private collectAllReferencedModules(
     module: GahModuleData,
     allModules: GahModuleData[]
@@ -241,7 +285,9 @@ export class E2ePlugin extends GahPlugin {
     });
   }
 
-  // get plugin config from Module
+  /**
+   * get plugin config from Module
+   */
   private getPluginCfgFromModule(module: GahModuleData): E2eConfig | undefined {
     let pluginCfg: E2eConfig | undefined = undefined;
     module.pluginCfg?.["@gah/e2e-plugin"]?.forEach((cfg) => {
@@ -252,9 +298,13 @@ export class E2ePlugin extends GahPlugin {
     return pluginCfg;
   }
 
-  // check is Plugin configuard in any gah module
-  private isPluginConfiguardInAnyModule(module: GahModuleData): boolean {
-    const cfg = module.gahConfig.plugins?.find((pl) => {
+  /**
+   * check is Plugin configuard in any gah module
+   */
+  private isPluginConfiguardInAnyModule(
+    module: GahModuleData
+  ): GahPluginDependencyConfig | undefined {
+    return module.gahConfig.plugins?.find((pl) => {
       if (pl.name === "@gah/e2e-plugin") {
         const pluginCfg = pl.settings as E2eConfig;
         if (pluginCfg) {
@@ -263,13 +313,12 @@ export class E2ePlugin extends GahPlugin {
       }
       return false;
     });
-
-    if (cfg) {
-      return true;
-    }
-    return false;
   }
 
+  /**
+   * link test folder from modules
+   * testDirectoryPath only exist in non shared helper modules
+   */
   private async linkTestFiles(
     allDepModules: GahModuleData[],
     distTestFolder: string
@@ -299,13 +348,20 @@ export class E2ePlugin extends GahPlugin {
     }
   }
 
+  /**
+   * remove index file from shared helper path
+   */
   private extractDirectoryFromPluginPath(plugPath: string): string[] {
     const pathArray = plugPath.split("/");
-    pathArray.pop(); // remove index file
+    pathArray.pop(); // remove the index file
     const lastFolder = pathArray.pop();
     return [pathArray.join("/"), lastFolder!];
   }
 
+  /**
+   * link shared test helper folder
+   * sharedHelperPath only exist in shared helper modules
+   */
   private async linkSharedTestFolder(
     allDepModules: GahModuleData[],
     distTestFolder: string
@@ -334,35 +390,51 @@ export class E2ePlugin extends GahPlugin {
         ) {
           await this.fileSystemService.ensureDirectory(sharedHelperDistPath);
 
-          await this.fileSystemService.createDirLink(
-            `${sharedHelperDistPath}/${plugDirectoryPath[1]}`,
-            sharedHelperSourcePath
-          );
+          try {
+            await this.fileSystemService.createDirLink(
+              `${sharedHelperDistPath}/${plugDirectoryPath[1]}`,
+              sharedHelperSourcePath
+            );
+          } catch (error) {
+            this.loggerService.error(error);
+          }
         }
       }
     }
   }
 
+  /**
+   * copy template config to .gah folder
+   */
   private async copyConfigFiles(module: GahModuleData, fileName: string) {
-    const playwrightCiConfigTemplatePath = this.fileSystemService.join(
+    const configTemplatePath = this.fileSystemService.join(
       __dirname,
       "..",
       "assets",
       fileName
     );
-    const playwrightCiConfigSourcePath = this.fileSystemService.join(
+    const configDistFilePath = this.fileSystemService.join(
       module.basePath,
       fileName
     );
-    if (await this.fileSystemService.fileExists(playwrightCiConfigSourcePath)) {
-      await this.fileSystemService.deleteFile(playwrightCiConfigSourcePath);
+
+    if (await this.fileSystemService.fileExists(configDistFilePath)) {
+      await this.fileSystemService.deleteFile(configDistFilePath);
     }
-    await this.fileSystemService.copyFile(
-      playwrightCiConfigTemplatePath,
-      module.basePath
-    );
+
+    try {
+      await this.fileSystemService.copyFile(
+        configTemplatePath,
+        module.basePath
+      );
+    } catch (error) {
+      this.loggerService.error(error);
+    }
   }
 
+  /**
+   * add modules to config -> projects array
+   */
   private async generatePlaywrightProjectsConfig(
     module: GahModuleData,
     allDepModules: GahModuleData[]
@@ -378,6 +450,9 @@ export class E2ePlugin extends GahPlugin {
     }
   }
 
+  /**
+   * add modules to config -> projects array
+   */
   private async addProjectToPlaywrightConfig(path: string, moduleName: string) {
     const playwrightConfigSourcePath = this.fileSystemService.join(
       path,
@@ -401,6 +476,9 @@ export class E2ePlugin extends GahPlugin {
     );
   }
 
+  /**
+   * generate ts-config.spec in modules for tests
+   */
   private async createTsconfigForTestModule(module: GahModuleData) {
     const plugConf = this.getPluginCfgFromModule(module);
     if (plugConf && plugConf.testDirectoryPath) {
@@ -425,10 +503,17 @@ export class E2ePlugin extends GahPlugin {
         `${plugConf?.testDirectoryPath!}/tsconfig.spec.json`,
         tsconfigJsonSourcePath
       );
-      await this.adjustTestTsconfig(module, plugConf, tsconfigJsonSourcePath);
+      await this.adjustTsConfigBaseUrl(
+        module,
+        plugConf,
+        tsconfigJsonSourcePath
+      );
     }
   }
 
+  /**
+   * generate ts-config.spec in host for tests
+   */
   private async createTsconfigForTestHost(module: GahModuleData) {
     const tsconfigJsonTemplatePath = this.fileSystemService.join(
       __dirname,
@@ -449,6 +534,9 @@ export class E2ePlugin extends GahPlugin {
     );
   }
 
+  /**
+   * add shared helper paths to ts-config.spec
+   */
   private async addPathsToTsconfig(
     module: GahModuleData,
     allDepModules: GahModuleData[]
@@ -508,7 +596,10 @@ export class E2ePlugin extends GahPlugin {
     }
   }
 
-  private async adjustTestTsconfig(
+  /**
+   * tsconfig add baseUrl relativePath
+   */
+  private async adjustTsConfigBaseUrl(
     module: GahModuleData,
     plugConf: E2eConfig,
     tsConfigPath: string
@@ -525,6 +616,9 @@ export class E2ePlugin extends GahPlugin {
     await this.fileSystemService.saveObjectToFile(tsConfigPath!, tsConfig);
   }
 
+  /**
+   * add packages to package.json
+   */
   private editPkgJson(pkgJson: PackageJson) {
     const allPackagesWithVersions = Object.keys(e2ePackages).map((pkgName) => {
       return { name: pkgName, version: e2ePackages[pkgName] };

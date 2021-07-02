@@ -2,14 +2,9 @@ import { PlaywrightTestConfig } from "@playwright/test";
 import mainConfig from "./playwright.config";
 
 const config: PlaywrightTestConfig = {
-  ...mainConfig,
+  ...mainConfig, // Extend main config
   use: {
-    // Browser options
     headless: true,
-
-    // Artifacts
-    screenshot: "only-on-failure",
-    video: "retry-with-video",
   },
   forbidOnly: true,
   reporter: [["line"], ["junit", { outputFile: "results/playwright-test.xml" }]],
