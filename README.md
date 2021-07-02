@@ -1,6 +1,6 @@
 # gah E2E Plugin
 
-This plugin provides the possibility to run tests in gah with playwright and ava. 
+This plugin provides the possibility to run tests in gah with playwright. 
 
 ## Configuration
 
@@ -54,5 +54,11 @@ gah install
 To run the tests navigate to the gah host folder and execute:
 
 ```console
-gah plugin run test <gah-modulename>
+gah plugin run test-p <gah-modulename>
+```
+
+For CI:
+
+```console
+gah plugin run test-ci-p <gah-modulename>
 ```
