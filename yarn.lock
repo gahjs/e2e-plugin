@@ -56,10 +56,10 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@gah/shared@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@gah/shared/-/shared-0.6.0.tgz#405fb2893fc414dc7d3a274f3d4a209daaf3766e"
-  integrity sha512-e8lverHtjvo3CibugoLtWPTWuDrQpM5f1LfUseGE+e2NNPnS/Us16dgWp01um2VHiK4NXURS4i6VUlggceecSw==
+"@gah/shared@^1.0.8":
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/@gah/shared/-/shared-1.0.8.tgz#5d6f38c7805148aea6ba2830e73b9b77e054c6e9"
+  integrity sha512-JbMXEH4JL468ebtmUwDQWKSF+SHuEZTcC1xf4QXlkxxK85ZUlCgWZ+RFzO5jvq9S16Bdy0OWA1N5OtLSLew3gA==
 
 "@nodelib/fs.scandir@2.1.4":
   version "2.1.4"
