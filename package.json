@@ -1,6 +1,6 @@
 {
   "name": "@gah/e2e-plugin",
-  "version": "0.2.7",
+  "version": "1.0.0",
   "description": "A plugin for gah to work with playwright.",
   "main": "./lib/index.js",
   "scripts": {
@@ -17,7 +17,7 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "@gah/shared": "^0.6.0"
+    "@gah/shared": "^1.0.8"
   },
   "prettier": "@awdware/prettier-config",
   "devDependencies": {
