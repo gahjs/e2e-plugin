@@ -5,5 +5,5 @@ export class E2eConfig extends GahPluginConfig {
   public testDirectoryPath: string;
   public sharedHelperPath: string;
   public sharedHelperAliasName: string;
-  public e2ePackages: {[key: string]: string};
+  public e2ePackages: { [key: string]: string };
 }

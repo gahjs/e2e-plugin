@@ -1,7 +1,7 @@
 {
   "name": "@gah/e2e-plugin",
   "version": "0.2.7",
-  "description": "A plugin for gah to work with playwright and ava.",
+  "description": "A plugin for gah to work with playwright.",
   "main": "./lib/index.js",
   "scripts": {
     "prebuild": "del-cli lib",
@@ -19,8 +19,10 @@
   "dependencies": {
     "@gah/shared": "^0.6.0"
   },
+  "prettier": "@awdware/prettier-config",
   "devDependencies": {
     "@awdware/eslint-config-nodejs": "^0.0.6",
+    "@awdware/prettier-config": "^0.0.2",
     "@types/node": "^12.0.0",
     "@typescript-eslint/eslint-plugin": "^4.13.0",
     "@typescript-eslint/parser": "^4.13.0",
