@@ -99,7 +99,7 @@ export class E2ePlugin extends GahPlugin {
          * if gah module
          */
         if (!event.module?.isHost) {
-          if (!this.isPluginConfiguardInModule(event.module)) {
+          if (!this.isPluginConfiguredInModule(event.module)) {
             return;
           }
 
@@ -130,7 +130,7 @@ export class E2ePlugin extends GahPlugin {
          * if gah host
          */
         if (event.module?.isHost) {
-          if (!this.isPluginConfiguardInAnyModule(event.module)) {
+          if (!this.isPluginConfiguredInAnyModule(event.module)) {
             return;
           }
 
@@ -172,14 +172,14 @@ export class E2ePlugin extends GahPlugin {
         /**
          * if gah module without plugin cfg
          */
-        if (!event.module?.isHost && !this.isPluginConfiguardInModule(event.module)) {
+        if (!event.module?.isHost && !this.isPluginConfiguredInModule(event.module)) {
           return;
         }
 
         /**
          * if gah host without any module with plugin cfg
          */
-        if (event.module?.isHost && !this.isPluginConfiguardInAnyModule(event.module)) {
+        if (event.module?.isHost && !this.isPluginConfiguredInAnyModule(event.module)) {
           return;
         }
 
@@ -199,9 +199,9 @@ export class E2ePlugin extends GahPlugin {
   }
 
   /**
-   * check is plugin is configuard in module
+   * check is plugin is configured in module
    */
-  private isPluginConfiguardInModule(module: GahModuleData): boolean {
+  private isPluginConfiguredInModule(module: GahModuleData): boolean {
     if (this.getPluginCfgFromModule(module)) {
       return true;
     }
@@ -246,9 +246,9 @@ export class E2ePlugin extends GahPlugin {
   }
 
   /**
-   * check is Plugin configuard in any gah module
+   * check is Plugin configured in any gah module
    */
-  private isPluginConfiguardInAnyModule(module: GahModuleData): GahPluginDependencyConfig | undefined {
+  private isPluginConfiguredInAnyModule(module: GahModuleData): GahPluginDependencyConfig | undefined {
     return module.gahConfig.plugins?.find(pl => {
       if (pl.name === '@gah/e2e-plugin') {
         const pluginCfg = pl.settings as E2eConfig;
